@@ -14,8 +14,8 @@
     <header class="bg-slate-900 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <span class="text-2xl font-bold tracking-wider text-blue-400">LibryScan</span>
-                <span class="text-xs bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full border border-slate-700">RidgeWorks Co., Ltd.</span>
+                <h1 class="text-xl font-bold text-slate-900">LibryScan</h1>
+                <p class="text-xs text-slate-500">Asset & Inventory Management System</p>
             </div>
             <div class="text-sm text-slate-400">
                 In-House Asset & Library Management

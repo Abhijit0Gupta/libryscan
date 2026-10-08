@@ -60,4 +60,26 @@ class ItemController extends Controller
 
         return response()->json(['summary' => $summary ?? 'Could not generate AI summary.']);
     }
+
+    // AI Chatbot Assistant Endpoint
+    public function chat(Request $request, GeminiService $gemini)
+    {
+        $request->validate(['message' => 'required|string']);
+
+        // Retrieve current database snapshot for prompt context
+        $items = Item::with('category')->get(['id', 'title', 'asset_tag', 'status', 'notes']);
+        
+        $inventoryContext = $items->map(function ($item) {
+            return "Asset: {$item->title} | Tag: {$item->asset_tag} | Category: {$item->category->name} | Status: {$item->status}";
+        })->implode("\n");
+
+        $prompt = "You are LibryScan AI, an internal IT asset management assistant.\n" .
+                  "Here is the live inventory context:\n{$inventoryContext}\n\n" .
+                  "User Question: {$request->input('message')}\n" .
+                  "Answer concisely and professionally based ONLY on the provided context.";
+
+        $response = $gemini->generateAssetSummary($prompt);
+
+        return response()->json(['reply' => $response ?? 'Sorry, I could not process your query right now.']);
+    }
 }
