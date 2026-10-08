@@ -31,7 +31,21 @@
                 {{ session('success') }}
             </div>
         @endif
+        <!-- Low Stock Monitoring Alert Widget -->
+        @php
+            $availableCount = $items->where('status', 'available')->count();
+            $totalCount = $items->count();
+        @endphp
 
+        @if($totalCount > 0 && ($availableCount / $totalCount) < 0.3)
+            <div class="mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-3">
+                    <span class="text-amber-600 font-bold text-lg">⚠️ Low Availability Alert</span>
+                    <p class="text-xs text-amber-800">Only <strong>{{ $availableCount }}</strong> of {{ $totalCount }} total assets are currently available. Consider restocking high-demand items.</p>
+                </div>
+                <span class="text-xs font-semibold bg-amber-200 text-amber-800 px-2.5 py-1 rounded-full">System Monitoring</span>
+            </div>
+        @endif
         <!-- Header Summary & Search Bar -->
         <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -108,14 +122,26 @@
                                         </button>
                                     </form>
                                 @elseif($item->status === 'borrowed')
-                                    <form action="{{ route('items.return', $item) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition">
-                                            Return Item
-                                        </button>
-                                    </form>
+                                    <div class="flex items-center gap-2">
+                                        <form action="{{ route('items.return', $item) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition">
+                                                Return Item
+                                            </button>
+                                        </form>
+                                        <form action="{{ route('items.reserve', $item) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition" title="Reserve when returned">
+                                                Reserve Queue
+                                            </button>
+                                        </form>
+                                    </div>
+                                @elseif($item->status === 'reserved')
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                                        Hold Fulfill Pending
+                                    </span>
                                 @endif
-                            </td>
+</td>
                         </tr>
                     @empty
                         <tr>
