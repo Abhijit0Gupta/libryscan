@@ -76,9 +76,23 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                <button class="text-blue-600 hover:text-blue-800 font-medium text-xs hover:underline">
-                                    Check Out →
-                                </button>
+                                @if($item->status === 'available')
+                                    <form action="{{ route('items.checkout', $item) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition">
+                                            Check Out
+                                        </button>
+                                    </form>
+                                @elseif($item->status === 'borrowed')
+                                    <form action="{{ route('items.return', $item) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3 py-1.5 rounded transition">
+                                            Return Item
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-xs text-slate-400 font-medium">Unavailable</span>
+                                @endif
                             </td>
                         </tr>
                     @empty
