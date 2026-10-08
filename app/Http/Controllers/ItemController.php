@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\Category;
+use App\Services\GeminiService;
 use Illuminate\Http\Request;
 
 class ItemController extends Controller
@@ -12,7 +13,6 @@ class ItemController extends Controller
     {
         $query = Item::with('category')->latest();
 
-        // Search by Title or Asset Tag
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function($q) use ($search) {
@@ -21,7 +21,6 @@ class ItemController extends Controller
             });
         }
 
-        // Filter by Status
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
         }
@@ -50,5 +49,15 @@ class ItemController extends Controller
         ]);
 
         return back()->with('success', 'New asset added successfully!');
+    }
+
+    // AI Summarizer Endpoint
+    public function generateAiSummary(Request $request, GeminiService $gemini)
+    {
+        $request->validate(['query' => 'required|string']);
+
+        $summary = $gemini->generateAssetSummary($request->input('query'));
+
+        return response()->json(['summary' => $summary ?? 'Could not generate AI summary.']);
     }
 }

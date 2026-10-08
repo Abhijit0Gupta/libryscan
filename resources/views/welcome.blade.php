@@ -129,39 +129,62 @@
         </div>
     </main>
 
-    <!-- Modal Form for Adding Assets -->
-    <div x-show="openModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" x-cloak>
-        <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-6" @click.away="openModal = false">
-            <h2 class="text-xl font-bold text-slate-900 mb-4">Add New Inventory Asset</h2>
-            <form action="{{ route('items.store') }}" method="POST" class="space-y-4">
-                @csrf
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Asset Title</label>
-                    <input type="text" name="title" required placeholder="e.g. iPad Pro 12.9 inch" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        <!-- Modal Form with AI Summarizer -->
+        <div x-show="openModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" x-cloak x-data="{ aiLoading: false, notesText: '' }">
+            <div class="bg-white rounded-xl shadow-xl border border-slate-200 max-w-lg w-full p-6" @click.away="openModal = false">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Add New Inventory Asset</h2>
+                    <span class="text-xs bg-purple-100 text-purple-700 font-semibold px-2.5 py-1 rounded-full border border-purple-200 flex items-center gap-1">
+                        ✨ Gemini AI Enabled
+                    </span>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Category</label>
-                    <select name="category_id" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Asset Tag / Serial / ISBN</label>
-                    <input type="text" name="asset_tag" required placeholder="e.g. RW-HW-0003" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Location / Notes</label>
-                    <textarea name="notes" rows="2" placeholder="e.g. Stored in Cabinet 1" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
-                </div>
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" @click="openModal = false" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-200 transition">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">Save Asset</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-</body>
-</html>
+                <form action="{{ route('items.store') }}" method="POST" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Asset Title / Model</label>
+                        <input type="text" id="asset_title" name="title" required placeholder="e.g. Sony WH-1000XM5 Noise Canceling Headphones" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Category</label>
+                        <select name="category_id" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Asset Tag / Serial / ISBN</label>
+                        <input type="text" name="asset_tag" required placeholder="e.g. RW-HW-0005" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-semibold text-slate-700 uppercase">Location / Notes</label>
+                            <button type="button" 
+                                @click="
+                                    const titleVal = document.getElementById('asset_title').value;
+                                    if(!titleVal) { alert('Please fill in the Asset Title first!'); return; }
+                                    aiLoading = true;
+                                    fetch('{{ route('items.ai_summary') }}', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                                        body: JSON.stringify({ query: titleVal })
+                                    })
+                                    .then(res => res.json())
+                                    .then(data => { notesText = data.summary; aiLoading = false; })
+                                    .catch(() => { aiLoading = false; alert('AI Request Failed.'); })
+                                " 
+                                class="text-xs font-semibold text-purple-600 hover:text-purple-800 transition flex items-center gap-1">
+                                <span x-show="!aiLoading">✨ Auto-Fill with AI</span>
+                                <span x-show="aiLoading" class="animate-pulse">Generating specs...</span>
+                            </button>
+                        </div>
+                        <textarea name="notes" x-model="notesText" rows="3" placeholder="Click 'Auto-Fill with AI' to generate technical notes automatically..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" @click="openModal = false" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-200 transition">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition">Save Asset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
