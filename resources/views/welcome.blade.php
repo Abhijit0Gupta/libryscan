@@ -6,6 +6,7 @@
     <title>LibryScan - Asset & Equipment Management System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen" x-data="{ openModal: false }">
 
@@ -90,8 +91,35 @@
                 <tbody class="divide-y divide-slate-200 text-sm">
                     @forelse($items as $item)
                         <tr class="hover:bg-slate-50/80 transition">
-                            <td class="px-6 py-4 font-mono text-xs text-blue-600 font-medium">
-                                {{ $item->asset_tag }}
+                            <td class="px-6 py-4 text-sm font-mono text-slate-600" x-data="{ qrModalOpen: false }">
+                                <div class="flex items-center gap-2">
+                                    <span>{{ $item->asset_tag }}</span>
+                                    <button type="button" 
+                                        @click="qrModalOpen = true" 
+                                        class="text-slate-400 hover:text-blue-600 transition text-base" 
+                                        title="View QR Code">
+                                        📱
+                                    </button>
+                                </div>
+
+                                <!-- QR Code Preview Modal -->
+                                <div x-show="qrModalOpen" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50" x-cloak>
+                                    <div class="bg-white rounded-xl shadow-xl border border-slate-200 p-6 text-center max-w-sm w-full" @click.away="qrModalOpen = false">
+                                        <h3 class="font-bold text-slate-900 text-base mb-1">{{ $item->title }}</h3>
+                                        <p class="text-xs text-slate-500 font-mono mb-4">Tag: {{ $item->asset_tag }}</p>
+                                        
+                                        <div class="flex justify-center mb-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                                            <img :src="'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent('{{ $item->asset_tag }}')" 
+                                                alt="QR Code" 
+                                                class="w-40 h-40 rounded shadow-sm border border-slate-200">
+                                        </div>
+
+                                        <div class="flex justify-center gap-2">
+                                            <button type="button" @click="window.print()" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition">Print Label</button>
+                                            <button type="button" @click="qrModalOpen = false" class="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-semibold rounded hover:bg-slate-200 transition">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="font-semibold text-slate-900">{{ $item->title }}</div>
